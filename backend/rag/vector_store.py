@@ -30,12 +30,11 @@ def is_valid_document(collection_result: GetResult, max_age_days: int) -> bool:
     
     return True
 
-def store_summary(place_name: str, location: str, review_summary: dict) -> None:
-    review_summary_str = json.dumps(review_summary)
+def store_summary(place_name: str, location: str, review_summary: str) -> None:
     place_id = generate_place_id(place_name, location)
 
     collection.upsert(
-        documents=[review_summary_str],
+        documents=[review_summary],
         metadatas=[{
             "place_name": place_name,
             "location": location,
@@ -46,7 +45,7 @@ def store_summary(place_name: str, location: str, review_summary: dict) -> None:
     print("[VECTOR STORE] Summary stored")
 
 
-def get_stored_summary(place_name: str, location: str, max_age_days: int = 30) -> dict | None:
+def get_stored_summary(place_name: str, location: str, max_age_days: int = 30) -> str | None:
     place_id = generate_place_id(place_name, location)
 
     collection_result = collection.get(
@@ -57,7 +56,7 @@ def get_stored_summary(place_name: str, location: str, max_age_days: int = 30) -
     if not is_valid_document(collection_result, max_age_days):
         return None
     
-    cached_review: dict = json.loads(collection_result["documents"][0])
+    cached_review: dict = collection_result["documents"][0]
     print("[VECTOR STORE] Got Stored Summary")
     return cached_review
     
