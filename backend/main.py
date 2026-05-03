@@ -14,6 +14,10 @@ def main():
     place_name = place_info["place_name"]
     location = place_info["location"]
 
+    if place_name == "" and location == "":
+        print("No place name and location identified. Please enter proper query!")
+        return
+
     print(f"[MAIN] Extracted {place_name} and {location} from user query")
 
     cached = get_stored_summary(
@@ -44,9 +48,9 @@ def main():
     updated_reviews = reviews[:MAX_REVIEWS]
 
 
-    final_summary : dict = summarize_reviews(place_name, location, updated_reviews)
-    print(f"[Main] Gemini cooked this output: {final_summary}")
-    store_summary(place_name, location, final_summary)
+    final_output : dict = summarize_reviews(place_name, location, updated_reviews)
+    print(f"[Main] Gemini cooked this output: {final_output}")
+    store_summary(place_name, location, final_output)
 
 if __name__ == "__main__":
     main()
