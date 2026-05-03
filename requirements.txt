@@ -8,3 +8,6 @@ langchain-google-genai
 langgraph
 fast-api
 uvicorn
+langchain-chroma
+sentence-transformers 
+langchain-huggingface
