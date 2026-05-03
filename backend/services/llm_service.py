@@ -1,5 +1,5 @@
 from google import genai
-from config import GEMINI_TOKEN
+from backend.core.config import GEMINI_TOKEN
 
 gemini_client = genai.Client(api_key=GEMINI_TOKEN)
 GEMINI_MODEL = 'gemini-2.5-flash'
