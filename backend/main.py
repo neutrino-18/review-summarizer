@@ -1,56 +1,24 @@
-from pipelines.review_pipeline import summarize_reviews, extract_place_info
-from services.apify_service import fetch_reviews
-from utils.review_util import save_reviews, load_reviews
-from rag.vector_store import store_summary, get_stored_summary
+from pipelines.graph.review_graph import graph
 
-USERQUERY = "What are the reviews of Starbucks in Udaipur?"
-MAX_REVIEWS = 20
-MAX_AGE_DAYS = 30
+USERQUERY = "Is Sankalp in Udaipur really a good place?"
 
 
 def main():
-    place_info = extract_place_info(USERQUERY)
-
-    place_name = place_info["place_name"]
-    location = place_info["location"]
-
-    if place_name == "" and location == "":
-        print("No place name and location identified. Please enter proper query!")
-        return
-
-    print(f"[MAIN] Extracted {place_name} and {location} from user query")
-
-    cached = get_stored_summary(
-        place_name=place_name,
-        location=location,
-        max_age_days=MAX_AGE_DAYS
-    )
-
-    if cached:
-        print("[MAIN] Cache Hit.")
-        print(cached)
-        return
     
-    print("[MAIN] Cache Miss")
+    final_summary = graph.invoke({
+        "user_query": USERQUERY,
+        "no_info": False,
+        "no_reviews": False,
+    })
 
-    reviews = load_reviews(place_name, location)
-
-    if reviews is None:
-        print("[MAIN] No saved reviews. Fetching from Apify.")
-
-        reviews = fetch_reviews(place_name, location, MAX_REVIEWS)
-        save_reviews(place_name, location, reviews)
-
-    if not reviews:
-        print("[MAIN] No reviews Found!")
+    if final_summary["no_info"]:
+        print("No place name and location found in the query.")
         return
+    elif final_summary["no_reviews"]:
+        print("No reviews found in any of the sources.")
 
-    updated_reviews = reviews[:MAX_REVIEWS]
-
-
-    final_output : dict = summarize_reviews(place_name, location, updated_reviews)
-    print(f"[Main] Gemini cooked this output: {final_output}")
-    store_summary(place_name, location, final_output)
+    summary = final_summary["summary"]
+    print(f"[Main] Gemini cooked this output: {summary}")
 
 if __name__ == "__main__":
     main()
