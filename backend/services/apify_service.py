@@ -1,5 +1,5 @@
 import requests
-from backend.core.config import APIFY_TOKEN
+from core.config import APIFY_TOKEN
 from enum import Enum
 
 class SortBy(Enum):
