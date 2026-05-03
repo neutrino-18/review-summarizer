@@ -78,12 +78,13 @@ def summarize_reviews(place_name: str, location: str, reviews: list[dict]) -> di
         You are a professional summarizer
 
         Task:
-        Summarize attached reviews into lists of pros and cons separtely for this place: {place_name} which is located here: {location}.
+        Summarize attached reviews into lists of pros and cons separtely and a concise end summary of those pros and cons for this place: {place_name} which is located here: {location}.
 
         Rules:
         - Return ONLY a valid JSON object. No explanation, no extra text, no formatting, just the JSON.
-        - JSON keys MUST be exactly 'pros', 'cons'.
-        - JSON values MUST be a list of complete summarized sentences based on all the reviews, not just the keywords.
+        - JSON keys MUST be exactly 'pros', 'cons', 'summary'.
+        - JSON values for pros and cons MUST be a list of complete summarized sentences based on all the reviews, not just the keywords.
+        - JSON values for summary MUST be a single concise summarized statement of those pros and cons.
         - Combine related points from multiple reviews into single coherent sentences.
         - Be decriptive about explaning using joining words, expressions etc.
         - Each point should be a full sentence that would make sense on its own.
@@ -94,7 +95,7 @@ def summarize_reviews(place_name: str, location: str, reviews: list[dict]) -> di
         Treat this as if you have no prior knowledge of this place and just blindly refer the given reviews.
 
         Example Output:
-        {{"pros": ["It is very good place", 'Its food is very tasty'], "cons": ["Hygiene is not maintained"]}}
+        {{"pros": ["It is very good place", 'Its food is very tasty'], "cons": ["Hygiene is not maintained"], "summary": "Overall a cozy and good place but lacks hygiene"}}
 
         Now summarize these reviews accordingly:
         {reviews}
@@ -107,9 +108,9 @@ def summarize_reviews(place_name: str, location: str, reviews: list[dict]) -> di
     print("[REVIEW PIPELINE] summarize chain ready")
 
 
-    final_pros_cons: dict = chain.invoke({"place_name": place_name, "location" : location, "reviews": reviews})
+    summarized_reviews: dict = chain.invoke({"place_name": place_name, "location" : location, "reviews": reviews})
     print("[REVIEW PIPELINE] summarize chain invoked")
 
 
-    print(f"[REVIEW PIPELINE] Final Pros and Cons are: {final_pros_cons}")
-    return final_pros_cons
+    print(f"[REVIEW PIPELINE] Final Pros and Cons are: {summarized_reviews}")
+    return summarized_reviews
