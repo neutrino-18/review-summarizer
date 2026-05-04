@@ -11,8 +11,8 @@ from core.config import MAX_AGE_DAYS, MAX_REVIEWS
 def extract_place_node(state: ReviewState) -> dict:
     place_info: dict = extract_place_info(state["user_query"])
 
-    place_name: str = place_info["place_name"]
-    location: str = place_info["location"]
+    place_name: str = place_info["place_name"].lower()
+    location: str = place_info["location"].lower()
 
     print(f"[GRAPH] Extracted {place_name} and {location} from user query")
 
@@ -34,7 +34,7 @@ def route_after_extract(state: ReviewState)-> str:
 
 
 def detect_intent_node(state: ReviewState) -> dict:
-    history = state.get("conversation_history", "No previous conversation")
+    history = state.get("conversation_history", "")
 
     intent = detect_intent(state["user_query"], history)
 
@@ -118,17 +118,18 @@ def load_reviews_node(state: ReviewState) -> dict:
 
         if not reviews:
             print("[GRAPH] No reviews found from Apify.")
-            return {"reviews": [], "no_reviews": True}
+            summary = "No listed reviews found for the specific query"
+            return {"reviews": [], "no_reviews": True, "summary": summary}
         
         # saving reviews to local storage here btw
         save_reviews(state["place_name"], state["location"], reviews)
         fresh = True
 
-    updated_reviews = reviews[:MAX_REVIEWS]
+    updated_reviews = reviews
     if fresh:
         store_reviews_for_retrieval(state["place_name"], state["location"], updated_reviews)
 
-    return {"reviews": updated_reviews}
+    return {"reviews": updated_reviews, "no_reviews": False}
 
 # Conditional Edge: if reviews present or not
 def route_after_load(state: ReviewState) -> str:  

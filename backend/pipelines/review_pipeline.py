@@ -1,13 +1,22 @@
-from langchain_google_genai import ChatGoogleGenerativeAI
+# from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
 from core.config import GEMINI_TOKEN
+from langchain_openai import ChatOpenAI
+from core.config import OPEN_AI_API
 
 
-llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash",
-    google_api_key=GEMINI_TOKEN,
-    temperature=0.1
+# llm = ChatGoogleGenerativeAI(
+#     model="gemini-2.5-flash",
+#     google_api_key=GEMINI_TOKEN,
+#     temperature=0.1
+# )
+
+llm = ChatOpenAI(
+    model="openai/gpt-oss-120b:free",
+    api_key=OPEN_AI_API,
+    base_url="https://openrouter.ai/api/v1",
+    temperature=0.2
 )
 
 
@@ -61,11 +70,11 @@ def extract_place_info(user_query: str) -> dict:
 
 
     chain = prompt | llm | JsonOutputParser()
-    print("[REVIEW PIPELINE] extraction chain ready")
+    print("[REVIEW PIPELINE] Extraction chain ready")
 
 
     place_info: dict = chain.invoke({"user_query" : user_query})
-    print(f"[REVIEW PIPELINE] extraction chain invoked. Place info ready: {place_info}")
+    print(f"[REVIEW PIPELINE] Extraction chain invoked. Place info ready: {place_info}")
 
     return place_info
 
@@ -82,24 +91,29 @@ def summarize_reviews(place_name: str, location: str, reviews: list[str]) -> str
         Task:
         Summarize the reviews for {place_name} in {location} into a single, 
         natural and informative paragraph. Cover the overall experience, 
-        standout positives, notable negatives, and who this place is best suited for.
+        standout positives(pros), notable negatives(cons), and who this place is best suited for.
 
         STRICT RULE: Only use information explicitly mentioned in the reviews.
         Do not use any prior knowledge about this place.
 
         These are the Reviews:
         {reviews}
-
-        Return ONLY the paragraph. No headings, no bullet points, no extra text.
+        
+        Output:
+        Return ONLY the paragraph.
+        First a normal conversational statement acknowledging the request.
+        For example: "Sure here is the overall summary of the reviews for {place_name}.
+        Not this exact statement but similar to this. 
+        Then the summary paragraph formatted as headings, bullet points.
         """
     )
     
     chain = prompt | llm | StrOutputParser()
-    print("[REVIEW PIPELINE] summarize chain ready")
+    print("[REVIEW PIPELINE] Summarize chain ready")
 
 
     summarized_reviews: str = chain.invoke({"place_name": place_name, "location" : location, "reviews": reviews})
-    print("[REVIEW PIPELINE] summarize chain invoked. Reviews Summarized")
+    print("[REVIEW PIPELINE] Summarize chain invoked. Reviews Summarized")
 
     return summarized_reviews
 
@@ -120,7 +134,7 @@ def detect_intent(user_query: str, conversation_history: str) -> str:
         First, check if the latest query refers to anything in the conversation history 
         (including pronouns like "it", "there", "that place", "this place").
 
-        If the query refers to a place or business mentioned in the conversation history:
+        If the query refers to a place or business or anything related to asking about the place like the price, food or any amenitie mentioned in the conversation history:
         → Return a short intent phrase (2-5 words) describing what the user wants to know.
         Examples:
         - "overall quality skeptical"
@@ -142,7 +156,7 @@ def detect_intent(user_query: str, conversation_history: str) -> str:
     )
     
     chain = prompt | llm | StrOutputParser()
-    print("[REVIEW PIPELINE] chain ready")
+    print("[REVIEW PIPELINE] Intent Detection chain ready")
     
     intent = chain.invoke({"user_query": user_query, "conversation_history": conversation_history})
     print(f"[REVIEW PIPELINE] Intent Determined: {intent}")
@@ -155,10 +169,10 @@ def normal_conversation(user_query: str) -> str:
     prompt = PromptTemplate(
         input_variables=["user_query"],
         template="""
-        You are a very good and great small talker
+        You are a very good and great talker.
         
         Task:
-        Reply to the query of user as a friend and a buddy enthusiastically and in a very friendly way and tone.
+        Reply to the query of user as a friend and a buddy enthusiastically and conversationally and in a very friendly way and tone.
 
         User query: {user_query}
 
@@ -168,7 +182,7 @@ def normal_conversation(user_query: str) -> str:
     )
     
     chain = prompt | llm | StrOutputParser()
-    print("[REVIEW PIPELINE] conversation chain ready")
+    print("[REVIEW PIPELINE] Conversation chain ready")
     
     response = chain.invoke({"user_query": user_query})
     print(f"[REVIEW PIPELINE] Conversation Complete")
@@ -201,7 +215,14 @@ def rewrite_on_intent(place_name: str, intent: str, relevant_reviews: list[str],
         Write a focused, natural paragraph that directly addresses the user's intent.
         Base your response ONLY on the reviews provided.
         Match the tone to the intent — if skeptical, be honest about negatives.
-        If asking about a specific aspect, focus only on that aspect.
+        If asking about a specific aspect, focus only on that aspect and respond accordingly.
+        
+        Keep in mind:
+        The paragraph should be conversational while also accounting the user's intent.
+        For example: If the user's intent is somewhat skeptical about the place being good.
+        Then respond like: "Yeahhh! that place is actually good(or bad based on the relevant reviews given).
+        Like just be generally conversational like a normal human being answering to a followup asked to him/her.
+        Similarly for any type of intentions, just refer the relevant reviews and based on the intent and relevant reviews, repond.
 
         Output:
         Return ONLY the paragraph.
@@ -209,9 +230,9 @@ def rewrite_on_intent(place_name: str, intent: str, relevant_reviews: list[str],
     )
 
     chain = prompt | llm | StrOutputParser()
-    print("[REVIEW PIPELINE] chain ready")
+    print("[REVIEW PIPELINE] Rewrite chain ready")
 
     follow_up_response = chain.invoke({"place_name": place_name, "intent": intent, "reviews": formatted_reviews, "conversation_history": conversation_history})
-    print(f"[REVIEW PIPELINE] chain invoked. Follow up response generated")
+    print(f"[REVIEW PIPELINE] Rewrite chain invoked. Follow up response generated")
 
     return follow_up_response

@@ -29,7 +29,7 @@ def store_reviews_for_retrieval(place_name: str, location: str, reviews: list[di
         vector_store.add_texts(texts=texts, metadatas=metadata)
 
 
-def retrieve_relevant_reviews(intent: str, place_name: str, k: int = 5) -> list[str]:
+def retrieve_relevant_reviews(intent: str, place_name: str, k: int = 8) -> list[str]:
     retriever = vector_store.as_retriever(
         search_kwargs = {
             "k" : k,

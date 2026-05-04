@@ -1,12 +1,13 @@
 requests
 python-dotenv
-google-genai
+# google-genai
 chromadb
 langchain
 langchain-core
-langchain-google-genai
+langchain-openai
+# langchain-google-genai
 langgraph
-fast-api
+fastapi
 uvicorn
 langchain-chroma
 sentence-transformers 
